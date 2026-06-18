@@ -17,8 +17,8 @@ const BodyStats = () => {
     try {
       const headers = { 'Authorization': `Bearer ${user.token}` };
       const [statsRes, profileRes] = await Promise.all([
-        fetch('http://localhost:5000/api/stats',         { headers }),
-        fetch('http://localhost:5000/api/users/profile', { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/stats',         { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', { headers }),
       ]);
       const statsData   = await statsRes.json();
       const profileData = await profileRes.json();

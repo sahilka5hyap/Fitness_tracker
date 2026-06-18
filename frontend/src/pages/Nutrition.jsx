@@ -60,8 +60,8 @@ const Nutrition = () => {
     try {
       const headers = { 'Authorization': `Bearer ${user.token}` };
       const [mealsRes, profileRes] = await Promise.all([
-        fetch('http://localhost:5000/api/nutrition',     { headers }),
-        fetch('http://localhost:5000/api/users/profile', { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/nutrition',     { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', { headers }),
       ]);
       const [data, profileData] = await Promise.all([mealsRes.json(), profileRes.json()]);
 
@@ -80,7 +80,7 @@ const Nutrition = () => {
   const deleteMeal = async (id) => {
     if (!window.confirm('Are you sure you want to delete this meal?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/nutrition/${id}`, {
+      const res = await fetch(`https://fitness-tracker-4q8f.onrender.com/api/nutrition/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${user.token}` }
       });

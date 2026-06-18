@@ -98,10 +98,10 @@ const Dashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${user.token}` };
       const [workoutsRes, nutritionRes, statsRes, profileRes] = await Promise.all([
-        fetch('http://localhost:5000/api/workouts',      { headers }),
-        fetch('http://localhost:5000/api/nutrition',     { headers }),
-        fetch('http://localhost:5000/api/stats',         { headers }),
-        fetch('http://localhost:5000/api/users/profile', { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/workouts',      { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/nutrition',     { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/stats',         { headers }),
+        fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', { headers }),
       ]);
       const [workouts, nutrition, stats, profileData] = await Promise.all([
         workoutsRes.json(), nutritionRes.json(), statsRes.json(), profileRes.json()

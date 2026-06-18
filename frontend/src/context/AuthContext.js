@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res  = await fetch('http://localhost:5000/api/users/login', {
+      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/login', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email, password }),
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      const res  = await fetch('http://localhost:5000/api/users/register', {
+      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ name, email, password }),

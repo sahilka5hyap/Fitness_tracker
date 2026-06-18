@@ -22,7 +22,7 @@ const Onboarding = () => {
     }
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/users/profile', {
+      const res = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
         body:    JSON.stringify({
