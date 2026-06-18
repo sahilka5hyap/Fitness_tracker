@@ -11,9 +11,10 @@ const app = express();
 // ✅ FIX: explicitly allow your Expo web origin
 app.use(cors({
   origin: [
-    'http://localhost:8081',   // Expo web default port
-    'http://localhost:19006',  // Expo web alternate port
-    'http://localhost:3000',   // in case you use another port
+    "http://localhost:8081",
+    "http://localhost:19006",
+    "http://localhost:3000",
+    "https://fitness-tracker-alpha-sepia.vercel.app",
   ],
   credentials: true,
 }));
