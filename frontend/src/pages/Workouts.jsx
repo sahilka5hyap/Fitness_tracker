@@ -89,7 +89,7 @@ const Workouts = () => {
 
   const fetchWorkouts = async () => {
     try {
-      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/workouts', {
+      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/workouts', {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       const data = await res.json();
@@ -104,7 +104,7 @@ const Workouts = () => {
   const deleteWorkout = async (id) => {
     if (!window.confirm('Delete this workout?')) return;
     try {
-      await fetch(`https://fitness-tracker-4q8f.onrender.com/api/workouts/${id}`, {
+      await fetch(`https://fitness-backend-z4vd.onrender.com/api/workouts/${id}`, {
         method:  'DELETE',
         headers: { Authorization: `Bearer ${user.token}` },
       });

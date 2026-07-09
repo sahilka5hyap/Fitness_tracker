@@ -25,8 +25,8 @@ const WeeklySummary = ({ isOpen, onClose }) => {
 
       // Fetch workouts and nutrition at the same time
       const [workoutsRes, nutritionRes] = await Promise.all([
-        fetch('http://localhost:5000/api/workouts',  { headers }),
-        fetch('http://localhost:5000/api/nutrition', { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',  { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/nutrition', { headers }),
       ]);
       const [workouts, nutrition] = await Promise.all([
         workoutsRes.json(),

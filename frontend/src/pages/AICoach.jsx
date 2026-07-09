@@ -148,7 +148,7 @@ const AICoach = () => {
       .map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/ai/chat', {
+      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/ai/chat', {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',

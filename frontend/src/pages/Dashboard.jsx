@@ -98,10 +98,10 @@ const Dashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${user.token}` };
       const [workoutsRes, nutritionRes, statsRes, profileRes] = await Promise.all([
-        fetch('https://fitness-tracker-4q8f.onrender.com/api/workouts',      { headers }),
-        fetch('https://fitness-tracker-4q8f.onrender.com/api/nutrition',     { headers }),
-        fetch('https://fitness-tracker-4q8f.onrender.com/api/stats',         { headers }),
-        fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',      { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/nutrition',     { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/stats',         { headers }),
+        fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
       ]);
       const [workouts, nutrition, stats, profileData] = await Promise.all([
         workoutsRes.json(), nutritionRes.json(), statsRes.json(), profileRes.json()
@@ -156,7 +156,7 @@ const Dashboard = () => {
     setDashboardData(prev => ({ ...prev, [key]: newValue }));
 
     try {
-      await fetch('http://localhost:5000/api/stats', {
+      await fetch('https://fitness-backend-z4vd.onrender.com/api/stats', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
         body:    JSON.stringify({ [key]: newValue }),

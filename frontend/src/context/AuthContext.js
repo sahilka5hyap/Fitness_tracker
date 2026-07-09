@@ -14,6 +14,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let storedUser = localStorage.getItem('user');
 
+    // ✅ FRONTEND-ONLY MODE: no real backend/login required.
+    // If nobody is logged in yet, auto-create a local guest user so the
+    // app skips the login screen and opens straight into the Dashboard.
     if (!storedUser) {
       const guestUser = {
         _id: 'guest',
@@ -36,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/login', {
+      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/users/login', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email, password }),
@@ -57,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      const res  = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/register', {
+      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/users/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ name, email, password }),

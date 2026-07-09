@@ -37,9 +37,9 @@ const Profile = () => {
       try {
         const headers = { 'Authorization': `Bearer ${user.token}` };
         const [profileRes, workoutsRes, statsRes] = await Promise.all([
-          fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', { headers }),
-          fetch('https://fitness-tracker-4q8f.onrender.com/api/workouts',      { headers }),
-          fetch('https://fitness-tracker-4q8f.onrender.com/api/stats',         { headers }),
+          fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
+          fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',      { headers }),
+          fetch('https://fitness-backend-z4vd.onrender.com/api/stats',         { headers }),
         ]);
         const profile   = await profileRes.json();
         const workouts  = await workoutsRes.json();
@@ -69,7 +69,7 @@ const Profile = () => {
     setLoading(true);
     setMsg('');
     try {
-      const response = await fetch('https://fitness-tracker-4q8f.onrender.com/api/users/profile', {
+      const response = await fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
         body:    JSON.stringify({

@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://fitness-backend-z4vd.onrender.com';
 
 const getHeaders = (token, isJson = true) => {
   const headers = {};
