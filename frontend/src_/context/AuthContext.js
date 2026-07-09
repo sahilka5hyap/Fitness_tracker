@@ -6,6 +6,8 @@ export const AuthProvider = ({ children }) => {
   const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
+  //onboard
+
 
   const [needsOnboarding, setNeedsOnboarding] = useState(() => {
     return localStorage.getItem('needsOnboarding') === 'true';
