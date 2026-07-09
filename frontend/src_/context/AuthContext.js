@@ -12,23 +12,8 @@ export const AuthProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    let storedUser = localStorage.getItem('user');
-
-    // ✅ FRONTEND-ONLY MODE: no real backend/login required.
-    // If nobody is logged in yet, auto-create a local guest user so the
-    // app skips the login screen and opens straight into the Dashboard.
-    if (!storedUser) {
-      const guestUser = {
-        _id: 'guest',
-        name: 'Guest',
-        email: 'guest@example.com',
-        token: 'guest-token',
-      };
-      localStorage.setItem('user', JSON.stringify(guestUser));
-      storedUser = JSON.stringify(guestUser);
-    }
-
-    setUser(JSON.parse(storedUser));
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setUser(JSON.parse(storedUser));
     setLoading(false);
   }, []);
 

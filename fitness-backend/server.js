@@ -8,18 +8,20 @@ connectDB();
 
 const app = express();
 
+// ✅ FIX: explicitly allow your Expo web origin
 app.use(cors({
   origin: [
     "http://localhost:8081",
     "http://localhost:19006",
     "http://localhost:3000",
-    "https://fitness-tracker-alpha-sepia.vercel.app", // 🔁 replace with your real Vercel URL
+    "https://sahil-fit-app.vercel.app",
   ],
   credentials: true,
 }));
 
 app.use(express.json());
 
+// rest of your routes...
 app.get("/api", (req, res) => {
   res.json({ message: "AI Fitness Tracker API running 🚀" });
 });
@@ -39,8 +41,12 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;
-  res.status(statusCode).json({ success: false, message: err.message || "Server Error" });
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "Server Error",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
+// ✅ This allows connections from phone on same WiFi
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
