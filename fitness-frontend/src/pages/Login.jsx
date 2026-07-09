@@ -67,7 +67,7 @@ const Login = () => {
                 <input type="email"
                   className="w-full border pl-12 p-3 rounded-xl focus:border-[#D4FF33] focus:outline-none transition-colors"
                   style={{ backgroundColor: t.input, borderColor: t.borderHex, color: t.textHex }}
-                  placeholder="john@example.com"
+                  placeholder="your@email.com"
                   value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
             </div>
