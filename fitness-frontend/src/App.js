@@ -2,6 +2,8 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ThemeProvider, ThemeContext } from './context/ThemeContext';
+import { ToastProvider } from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 import BottomNav from './components/BottomNav';
 
 import Login      from './pages/Login';
@@ -21,7 +23,6 @@ const PrivateRoute = ({ children }) => {
 };
 
 const AppContent = () => {
-  // ✅ FIX: Bring in needsOnboarding from AuthContext
   const { user, loading, needsOnboarding } = useContext(AuthContext);
   const { t } = useContext(ThemeContext);
 
@@ -39,8 +40,6 @@ const AppContent = () => {
       <Routes>
         {/* Public routes */}
         <Route path="/login"    element={user ? <Navigate to="/dashboard" /> : <Login />} />
-        
-        {/* ✅ FIX: If a user exists on the register page, check where they need to go */}
         <Route path="/register" element={user ? (needsOnboarding ? <Navigate to="/onboarding" /> : <Navigate to="/dashboard" />) : <Register />} />
 
         {/* Protected routes */}
@@ -52,8 +51,11 @@ const AppContent = () => {
         <Route path="/profile"    element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/body-stats" element={<PrivateRoute><BodyStats /></PrivateRoute>} />
 
-        {/* ✅ FIX: Default route logic updated to handle onboarding check */}
+        {/* Default route */}
         <Route path="/" element={<Navigate to={user ? (needsOnboarding ? '/onboarding' : '/dashboard') : '/login'} />} />
+
+        {/* Catch-all: unknown routes redirect instead of rendering blank */}
+        <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
       </Routes>
 
       {user && <BottomNav />}
@@ -63,12 +65,16 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppContent />
-        </ThemeProvider>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }

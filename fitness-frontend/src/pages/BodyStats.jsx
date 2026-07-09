@@ -4,10 +4,14 @@ import { ThemeContext } from '../context/ThemeContext';
 import { Plus, Scale, Percent, Activity, Calendar, TrendingUp, TrendingDown, Ruler, Dumbbell } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip, YAxis, CartesianGrid } from 'recharts';
 import BodyStatsModel from '../components/BodyStatsModel';
+import { ListSkeleton, WorkoutRowSkeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 const BodyStats = () => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
   const [stats,       setStats]       = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,17 +19,18 @@ const BodyStats = () => {
 
   const fetchData = async () => {
     try {
-      const headers = { 'Authorization': `Bearer ${user.token}` };
-      const [statsRes, profileRes] = await Promise.all([
-        fetch('https://fitness-backend-z4vd.onrender.com/api/stats',         { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
+      const [statsData, profileData] = await Promise.all([
+        api.getStats(user.token),
+        api.getProfile(user.token),
       ]);
-      const statsData   = await statsRes.json();
-      const profileData = await profileRes.json();
       setStats(Array.isArray(statsData) ? [...statsData].sort((a, b) => new Date(b.date) - new Date(a.date)) : []);
       setUserProfile(profileData);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Could not load body stats');
+    } finally {
+      setLoading(false);
+    }
   };
 
     useEffect(() => { if (user) fetchData(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -157,7 +162,7 @@ const BodyStats = () => {
       <div className="space-y-4">
         <h3 className="font-bold text-lg" style={{ color: t.textHex }}>Detailed History</h3>
         {loading ? (
-          <div className="text-center py-10" style={{ color: t.subtextHex }}>Loading...</div>
+          <ListSkeleton rows={3} RowComponent={WorkoutRowSkeleton} />
         ) : stats.length === 0 ? (
           <div className="text-center py-10" style={{ color: t.subtextHex }}>No entries yet. Log your first body stat!</div>
         ) : stats.map(item => (

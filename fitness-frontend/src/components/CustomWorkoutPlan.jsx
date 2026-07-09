@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { Plus, Trash2, Save, X, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
+import { useToast } from './Toast';
 
 
 const STORAGE_KEY = 'myWorkoutPlans';
@@ -9,6 +10,7 @@ const STORAGE_KEY = 'myWorkoutPlans';
 const CustomWorkoutPlan = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
 
   const [plans,       setPlans]       = useState([]);     // list of saved plans
   const [showForm,    setShowForm]    = useState(false);  // show create form
@@ -51,12 +53,12 @@ const CustomWorkoutPlan = ({ isOpen, onClose }) => {
   // Save the new plan
   const handleSavePlan = () => {
     if (!planName.trim()) {
-      alert('Please enter a plan name');
+      toast.error('Please enter a plan name');
       return;
     }
     const filledExercises = exercises.filter(e => e.trim() !== '');
     if (filledExercises.length === 0) {
-      alert('Please add at least one exercise');
+      toast.error('Please add at least one exercise');
       return;
     }
 
@@ -68,6 +70,7 @@ const CustomWorkoutPlan = ({ isOpen, onClose }) => {
     };
 
     savePlans([...plans, newPlan]);
+    toast.success('Workout plan saved');
 
     // Reset form
     setPlanName('');

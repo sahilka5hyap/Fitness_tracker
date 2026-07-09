@@ -2,11 +2,16 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { User, Mail, Calendar, Ruler, Weight, Activity, LogOut, Save, ShieldCheck, Sun, Moon, Flame } from 'lucide-react';
+import { ProfileSkeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 const Profile = () => {
   const { user, logout }    = useContext(AuthContext);
   const { t, theme, changeTheme } = useContext(ThemeContext);
-  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const [loading, setLoading]         = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [msg,     setMsg]     = useState('');
   const [stats,   setStats]   = useState({ workouts: 0, calories: 0 });
   const [formData, setFormData] = useState({
@@ -34,16 +39,13 @@ const Profile = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.token) return;
+      setPageLoading(true);
       try {
-        const headers = { 'Authorization': `Bearer ${user.token}` };
-        const [profileRes, workoutsRes, statsRes] = await Promise.all([
-          fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
-          fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',      { headers }),
-          fetch('https://fitness-backend-z4vd.onrender.com/api/stats',         { headers }),
+        const [profile, workouts, bodyStats] = await Promise.all([
+          api.getProfile(user.token),
+          api.getWorkouts(user.token),
+          api.getStats(user.token),
         ]);
-        const profile   = await profileRes.json();
-        const workouts  = await workoutsRes.json();
-        const bodyStats = await statsRes.json();
 
         const totalCals    = Array.isArray(workouts)  ? workouts.reduce((a, c) => a + (c.caloriesBurned || 0), 0) : 0;
         const latestWeight = Array.isArray(bodyStats) && bodyStats.length > 0 ? bodyStats[0].weight : profile.weight;
@@ -59,9 +61,15 @@ const Profile = () => {
           gender:      profile.gender      || 'Not Specified',
           joinDate:    profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''
         });
-      } catch (error) { console.error('Error fetching profile', error); }
+      } catch (error) {
+        console.error('Error fetching profile', error);
+        toast.error(error.message || 'Could not load profile');
+      } finally {
+        setPageLoading(false);
+      }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleUpdate = async (e) => {
@@ -69,26 +77,23 @@ const Profile = () => {
     setLoading(true);
     setMsg('');
     try {
-      const response = await fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-        body:    JSON.stringify({
-          name:        formData.name,
-          age:         Number(formData.age),
-          height:      Number(formData.height),
-          fitnessGoal: formData.fitnessGoal,
-          gender:      formData.gender,
-        }),
+      await api.updateProfile(user.token, {
+        name:        formData.name,
+        age:         Number(formData.age),
+        height:      Number(formData.height),
+        fitnessGoal: formData.fitnessGoal,
+        gender:      formData.gender,
       });
-      if (response.ok) {
-        setMsg('✅ Profile updated successfully!');
-        setTimeout(() => setMsg(''), 3000);
-      } else {
-        const err = await response.json();
-        setMsg('❌ ' + (err.message || 'Update failed'));
-      }
-    } catch (error) { console.error(error); }
-    finally { setLoading(false); }
+      setMsg('✅ Profile updated successfully!');
+      toast.success('Profile updated');
+      setTimeout(() => setMsg(''), 3000);
+    } catch (error) {
+      console.error(error);
+      setMsg('❌ ' + (error.message || 'Update failed'));
+      toast.error(error.message || 'Update failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputCls = `w-full border rounded-xl p-3 focus:border-[#D4FF33] focus:outline-none transition-colors`;
@@ -99,6 +104,20 @@ const Profile = () => {
     { key: 'light', label: 'Light', icon: Sun,   desc: 'Clean light mode' },
     { key: 'warm',  label: 'Warm',  icon: Flame, desc: 'Eye-friendly warm' },
   ];
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen p-6 pb-24" style={{ backgroundColor: t.bg }}>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: t.textHex }}>My Profile</h1>
+            <p style={{ color: t.subtextHex }}>Manage your account settings</p>
+          </div>
+        </div>
+        <ProfileSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6 pb-24" style={{ backgroundColor: t.bg }}>

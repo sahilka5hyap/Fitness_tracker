@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { X, TrendingUp, Flame, Dumbbell, Clock, } from 'lucide-react';
+import { useToast } from './Toast';
+import api from '../utils/api';
 
 // Shows a weekly summary card of workouts, calories, active minutes
 // Usage: <WeeklySummary isOpen={show} onClose={() => setShow(false)} />
@@ -9,6 +11,7 @@ import { X, TrendingUp, Flame, Dumbbell, Clock, } from 'lucide-react';
 const WeeklySummary = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
 
   const [summary,  setSummary]  = useState(null);
   const [loading,  setLoading]  = useState(true);
@@ -21,16 +24,10 @@ const WeeklySummary = ({ isOpen, onClose }) => {
   const loadSummary = async () => {
     setLoading(true);
     try {
-      const headers = { 'Authorization': `Bearer ${user.token}` };
-
       // Fetch workouts and nutrition at the same time
-      const [workoutsRes, nutritionRes] = await Promise.all([
-        fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',  { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/nutrition', { headers }),
-      ]);
       const [workouts, nutrition] = await Promise.all([
-        workoutsRes.json(),
-        nutritionRes.json(),
+        api.getWorkouts(user.token),
+        api.getMeals(user.token),
       ]);
 
       // Figure out the start of this week (Monday)
@@ -71,6 +68,7 @@ const WeeklySummary = ({ isOpen, onClose }) => {
 
     } catch (err) {
       console.error(err);
+      toast.error(err.message || 'Could not load weekly summary');
     } finally {
       setLoading(false);
     }

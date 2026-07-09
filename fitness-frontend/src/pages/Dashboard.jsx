@@ -14,6 +14,9 @@ import BodyStatsModel    from '../components/BodyStatsModel';
 import RestTimer         from '../components/RestTimer';
 import WeeklySummary     from '../components/WeeklySummary';
 import CustomWorkoutPlan from '../components/CustomWorkoutPlan';
+import { StatCardSkeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 const calculateTDEE = (profile) => {
   const age    = profile?.age    || 25;
@@ -56,8 +59,10 @@ const calculateStreak = (workouts) => {
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
   const navigate = useNavigate();
   const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const [isLoading, setIsLoading] = useState(true);
 
   const [showQuickLogMenu,  setShowQuickLogMenu]  = useState(false);
   const [activeModal,       setActiveModal]       = useState(null);
@@ -95,16 +100,13 @@ const Dashboard = () => {
 
   const fetchData = useCallback(async () => {
     if (!user) return;
+    setIsLoading(true);
     try {
-      const headers = { 'Authorization': `Bearer ${user.token}` };
-      const [workoutsRes, nutritionRes, statsRes, profileRes] = await Promise.all([
-        fetch('https://fitness-backend-z4vd.onrender.com/api/workouts',      { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/nutrition',     { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/stats',         { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
-      ]);
       const [workouts, nutrition, stats, profileData] = await Promise.all([
-        workoutsRes.json(), nutritionRes.json(), statsRes.json(), profileRes.json()
+        api.getWorkouts(user.token),
+        api.getMeals(user.token),
+        api.getStats(user.token),
+        api.getProfile(user.token),
       ]);
 
       if (profileData && !profileData.message) {
@@ -141,8 +143,13 @@ const Dashboard = () => {
         return { day: date.toLocaleDateString('en-US', { weekday: 'short' }), active: mins };
       }));
 
-    } catch (e) { console.error(e); }
-  }, [user]);
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || 'Could not load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, toast]);
 
   useEffect(() => { if (user) fetchData(); }, [user, fetchData]);
 
@@ -156,13 +163,10 @@ const Dashboard = () => {
     setDashboardData(prev => ({ ...prev, [key]: newValue }));
 
     try {
-      await fetch('https://fitness-backend-z4vd.onrender.com/api/stats', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-        body:    JSON.stringify({ [key]: newValue }),
-      });
+      await api.createStat(user.token, { [key]: newValue });
     } catch (e) {
       console.error(e);
+      toast.error(e.message || 'Could not save that update');
       fetchData();
     }
   };
@@ -348,12 +352,18 @@ const Dashboard = () => {
         <Activity size={18} className="text-[#D4FF33]" /> Daily Tracking
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <MetricCard title="Weight"  value={dashboardData.weight}                 subtext="kg"    icon={Scale}      color="text-yellow-500" />
-        <MetricCard title="Muscle"  value={dashboardData.muscleMass}             subtext="kg"    icon={Dumbbell}   color="text-purple-500" />
-        <MetricCard title="Active"  value={dashboardData.activeMinutes}          subtext="min"   icon={Zap}        color="text-[#D4FF33]" />
-        <MetricCard title="Steps"   value={dashboardData.steps.toLocaleString()} subtext="steps" icon={Footprints} color="text-green-500"  type="steps" />
-        <MetricCard title="Sleep"   value={dashboardData.sleep.toFixed(1)}       subtext="hours" icon={Moon}       color="text-indigo-400" type="sleep" />
-        <MetricCard title="Water"   value={`${dashboardData.water.toFixed(2)}L`} subtext="/ 3L"  icon={Droplets}   color="text-cyan-400"   type="water" />
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
+        ) : (
+          <>
+            <MetricCard title="Weight"  value={dashboardData.weight}                 subtext="kg"    icon={Scale}      color="text-yellow-500" />
+            <MetricCard title="Muscle"  value={dashboardData.muscleMass}             subtext="kg"    icon={Dumbbell}   color="text-purple-500" />
+            <MetricCard title="Active"  value={dashboardData.activeMinutes}          subtext="min"   icon={Zap}        color="text-[#D4FF33]" />
+            <MetricCard title="Steps"   value={dashboardData.steps.toLocaleString()} subtext="steps" icon={Footprints} color="text-green-500"  type="steps" />
+            <MetricCard title="Sleep"   value={dashboardData.sleep.toFixed(1)}       subtext="hours" icon={Moon}       color="text-indigo-400" type="sleep" />
+            <MetricCard title="Water"   value={`${dashboardData.water.toFixed(2)}L`} subtext="/ 3L"  icon={Droplets}   color="text-cyan-400"   type="water" />
+          </>
+        )}
       </div>
 
       {/* Graph + Recent */}

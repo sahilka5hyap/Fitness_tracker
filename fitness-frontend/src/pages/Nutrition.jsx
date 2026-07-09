@@ -4,6 +4,9 @@ import { ThemeContext } from '../context/ThemeContext';
 import { Plus, Flame, Droplets, Utensils, Zap, Wheat, Trash2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import MealModel from '../components/MealModel';
+import { ListSkeleton, WorkoutRowSkeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 const calculateTargets = (profile) => {
   const age    = profile?.age    || 25;
@@ -48,22 +51,19 @@ const calculateTargets = (profile) => {
 const Nutrition = () => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
 
   const [todaysMeals, setTodaysMeals] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading,     setLoading]     = useState(true);
   const [targets,     setTargets]     = useState({ calories: 2500, protein: 150, carbs: 300, fat: 80 });
 
-  // ✅ FIX #6: useCallback keeps fetchMeals stable across renders so it can
-  // safely live in the useEffect dependency array without causing infinite loops.
   const fetchMeals = useCallback(async () => {
     try {
-      const headers = { 'Authorization': `Bearer ${user.token}` };
-      const [mealsRes, profileRes] = await Promise.all([
-        fetch('https://fitness-backend-z4vd.onrender.com/api/nutrition',     { headers }),
-        fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', { headers }),
+      const [data, profileData] = await Promise.all([
+        api.getMeals(user.token),
+        api.getProfile(user.token),
       ]);
-      const [data, profileData] = await Promise.all([mealsRes.json(), profileRes.json()]);
 
       if (profileData && !profileData.message) setTargets(calculateTargets(profileData));
 
@@ -72,20 +72,22 @@ const Nutrition = () => {
       setTodaysMeals(allMeals.filter(m => new Date(m.date).toDateString() === today));
     } catch (err) {
       console.error(err);
+      toast.error(err.message || 'Could not load nutrition data');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   const deleteMeal = async (id) => {
     if (!window.confirm('Are you sure you want to delete this meal?')) return;
     try {
-      const res = await fetch(`https://fitness-backend-z4vd.onrender.com/api/nutrition/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${user.token}` }
-      });
-      if (res.ok) fetchMeals();
-    } catch (err) { console.error(err); }
+      await api.deleteMeal(user.token, id);
+      toast.success('Meal deleted');
+      fetchMeals();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Could not delete meal');
+    }
   };
 
   // ✅ FIX #6: fetchMeals now included in deps — safe because useCallback keeps it stable
@@ -203,7 +205,7 @@ const Nutrition = () => {
         {/* Meal Log */}
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="text-center py-10" style={{ color: t.subtextHex }}>Loading meals...</div>
+            <ListSkeleton rows={3} RowComponent={WorkoutRowSkeleton} />
           ) : todaysMeals.length === 0 ? (
             <div className="text-center py-12 border rounded-2xl border-dashed" style={{ borderColor: t.borderHex }}>
               <Utensils size={40} className="mx-auto mb-4" style={{ color: t.subtextHex }} />

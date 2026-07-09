@@ -8,6 +8,9 @@ import {
 import WorkoutModel      from '../components/WorkoutModel';
 import ExerciseVideoModal from '../components/ExerciseVideoModal';
 import exerciseVideos    from '../data/exerciseVideos';
+import { ListSkeleton, WorkoutRowSkeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 const DAILY_ROUTINES = {
   Monday:    {
@@ -77,6 +80,7 @@ const DIFF_STYLE = {
 const Workouts = () => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
 
   const [workouts,         setWorkouts]         = useState([]);
   const [isModalOpen,      setIsModalOpen]      = useState(false);
@@ -89,13 +93,11 @@ const Workouts = () => {
 
   const fetchWorkouts = async () => {
     try {
-      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/workouts', {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      const data = await res.json();
+      const data = await api.getWorkouts(user.token);
       setWorkouts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      toast.error(err.message || 'Could not load workouts');
     } finally {
       setLoading(false);
     }
@@ -104,13 +106,12 @@ const Workouts = () => {
   const deleteWorkout = async (id) => {
     if (!window.confirm('Delete this workout?')) return;
     try {
-      await fetch(`https://fitness-backend-z4vd.onrender.com/api/workouts/${id}`, {
-        method:  'DELETE',
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      await api.deleteWorkout(user.token, id);
+      toast.success('Workout deleted');
       fetchWorkouts();
     } catch (err) {
       console.error(err);
+      toast.error(err.message || 'Could not delete workout');
     }
   };
 
@@ -341,7 +342,7 @@ const Workouts = () => {
           <h3 className="font-bold text-lg mb-4" style={{ color: t.textHex }}>Recent Logs</h3>
 
           {loading ? (
-            <div className="text-center py-12" style={{ color: t.subtextHex }}>Loading...</div>
+            <ListSkeleton rows={4} RowComponent={WorkoutRowSkeleton} />
           ) : workouts.length === 0 ? (
             <div className="text-center py-16 border rounded-2xl border-dashed" style={{ borderColor: t.borderHex }}>
               <Dumbbell size={48} className="mx-auto mb-4" style={{ color: t.subtextHex }} />

@@ -2,12 +2,15 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 import { Ruler, Activity, ArrowRight, User } from 'lucide-react';
 
 const Onboarding = () => {
   const { user, updateUser } = useContext(AuthContext);
   const { t }                = useContext(ThemeContext);
-  const navigate             = useNavigate();
+  const toast                = useToast();
+  const navigate              = useNavigate();
   const [loading,  setLoading]  = useState(false);
   const [formData, setFormData] = useState({
     gender: 'Male', age: '', height: '', weight: '', fitnessGoal: 'General Health'
@@ -18,32 +21,27 @@ const Onboarding = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.age || !formData.height || !formData.weight) {
-      alert('Please fill in all fields'); return;
+      toast.error('Please fill in all fields');
+      return;
     }
     setLoading(true);
     try {
-      const res = await fetch('https://fitness-backend-z4vd.onrender.com/api/users/profile', {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-        body:    JSON.stringify({
-          gender:      formData.gender,
-          age:         Number(formData.age),
-          height:      Number(formData.height),
-          weight:      Number(formData.weight),
-          fitnessGoal: formData.fitnessGoal,
-        }),
+      const data = await api.updateProfile(user.token, {
+        gender:      formData.gender,
+        age:         Number(formData.age),
+        height:      Number(formData.height),
+        weight:      Number(formData.weight),
+        fitnessGoal: formData.fitnessGoal,
       });
-      const data = await res.json();
-      if (res.ok) {
-        updateUser(data);
-        navigate('/dashboard');
-      } else {
-        alert(data.message || 'Something went wrong');
-      }
+      updateUser(data);
+      toast.success('Profile set up! Welcome to FitAI 🎉');
+      navigate('/dashboard');
     } catch (error) {
       console.error(error);
-      alert('Server Error. Is your backend running?');
-    } finally { setLoading(false); }
+      toast.error(error.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputCls = `w-full border rounded-xl p-4 focus:border-[#D4FF33] focus:outline-none transition-all`;

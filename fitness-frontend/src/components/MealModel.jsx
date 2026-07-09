@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { useToast } from './Toast';
 import { X, Flame, Search, Plus } from 'lucide-react';
-import { BASE_URL } from '../utils/api';
+import api from '../utils/api';
 
 const MealModel = ({ isOpen, onClose, onSave }) => {
   const { user }    = useContext(AuthContext);
@@ -23,11 +23,7 @@ const MealModel = ({ isOpen, onClose, onSave }) => {
     if (!isOpen || !user?.token) return;
     const fetchFoods = async () => {
       try {
-        const res  = await fetch(
-          `${BASE_URL}/api/foods/search?query=${encodeURIComponent(query)}`,
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
-        const data = await res.json();
+        const data = await api.searchFoods(user.token, query);
         setResults(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Food search error:', err);
@@ -83,27 +79,19 @@ const MealModel = ({ isOpen, onClose, onSave }) => {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/nutrition`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.token}` },
-        body: JSON.stringify({
-          mealType: formData.mealType,
-          foodName: formData.foodName,
-          calories: Number(formData.calories),
-          protein:  Number(formData.protein) || 0,
-          carbs:    Number(formData.carbs)   || 0,
-          fat:      Number(formData.fat)     || 0,
-        }),
+      await api.createMeal(user.token, {
+        mealType: formData.mealType,
+        foodName: formData.foodName,
+        calories: Number(formData.calories),
+        protein:  Number(formData.protein) || 0,
+        carbs:    Number(formData.carbs)   || 0,
+        fat:      Number(formData.fat)     || 0,
       });
-      if (res.ok) {
-        onSave();
-        onClose();
-      } else {
-        const err = await res.json();
-        toast.error(err.message || 'Failed to log meal');
-      }
+      toast.success('Meal logged 🍽️');
+      onSave();
+      onClose();
     } catch (err) {
-      toast.error('Connection error');
+      toast.error(err.message || 'Failed to log meal');
     } finally {
       setLoading(false);
     }

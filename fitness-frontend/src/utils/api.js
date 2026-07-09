@@ -1,5 +1,10 @@
 const BASE_URL = process.env.REACT_APP_API_URL || 'https://fitness-backend-z4vd.onrender.com';
 
+// Registered by AuthContext on mount so any failed request can trigger
+// an automatic logout + redirect when the token is invalid/expired.
+let onUnauthorized = null;
+export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn; };
+
 const getHeaders = (token, isJson = true) => {
   const headers = {};
   if (isJson) headers['Content-Type'] = 'application/json';
@@ -8,7 +13,17 @@ const getHeaders = (token, isJson = true) => {
 };
 
 const handleResponse = async (res) => {
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+
+  if (res.status === 401 && onUnauthorized) {
+    onUnauthorized(data.message || 'Session expired');
+  }
+
   if (!res.ok) throw new Error(data.message || 'Something went wrong');
   return data;
 };
@@ -43,7 +58,6 @@ const api = {
     const data = await fetch(`${BASE_URL}/api/workouts?limit=200`, {
       headers: getHeaders(token),
     }).then(handleResponse);
-    // Support both old array response and new paginated response
     return Array.isArray(data) ? data : (data.workouts || []);
   },
 
@@ -91,6 +105,12 @@ const api = {
       body:   JSON.stringify(data),
     }).then(handleResponse),
 
+  updateStat: (token, id, data) =>
+    fetch(`${BASE_URL}/api/stats/${id}`, {
+      method: 'PUT', headers: getHeaders(token),
+      body:   JSON.stringify(data),
+    }).then(handleResponse),
+
   deleteStat: (token, id) =>
     fetch(`${BASE_URL}/api/stats/${id}`, {
       method: 'DELETE', headers: getHeaders(token),
@@ -116,6 +136,17 @@ const api = {
   deleteGoal: (token, id) =>
     fetch(`${BASE_URL}/api/goals/${id}`, {
       method: 'DELETE', headers: getHeaders(token),
+    }).then(handleResponse),
+
+  // Exercises / Foods search
+  searchExercises: (token, query) =>
+    fetch(`${BASE_URL}/api/exercises/search?query=${encodeURIComponent(query)}`, {
+      headers: getHeaders(token),
+    }).then(handleResponse),
+
+  searchFoods: (token, query) =>
+    fetch(`${BASE_URL}/api/foods/search?query=${encodeURIComponent(query)}`, {
+      headers: getHeaders(token),
     }).then(handleResponse),
 
   // AI Coach

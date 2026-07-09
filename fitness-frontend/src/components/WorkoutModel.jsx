@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { useToast } from './Toast';
 import { X, Dumbbell, Search } from 'lucide-react';
-import { BASE_URL } from '../utils/api';
+import api from '../utils/api';
 
 const WorkoutModel = ({ isOpen, onClose, onSave }) => {
   const { user }   = useContext(AuthContext);
@@ -25,11 +25,7 @@ const WorkoutModel = ({ isOpen, onClose, onSave }) => {
     if (!isOpen || !user?.token) return;
     const fetchExercises = async () => {
       try {
-        const res  = await fetch(
-          `${BASE_URL}/api/exercises/search?query=${encodeURIComponent(query)}`,
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
-        const data = await res.json();
+        const data = await api.searchExercises(user.token, query);
         setResults(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Exercise search error:', err);
@@ -64,31 +60,23 @@ const WorkoutModel = ({ isOpen, onClose, onSave }) => {
     if (!finalTitle.trim()) { toast.error('Please select or type an exercise name'); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/workouts`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.token}` },
-        body: JSON.stringify({
-          title:          finalTitle,
-          exerciseName:   selected?.name     || finalTitle,
-          muscleGroup:    selected?.muscleGroup || 'Other',
-          sets:           Number(formData.sets)           || 0,
-          reps:           Number(formData.reps)           || 0,
-          weight:         Number(formData.weight)         || 0,
-          duration:       Number(formData.duration)       || 0,
-          caloriesBurned: Number(formData.caloriesBurned) || 0,
-          distance:       Number(formData.distance)       || 0,
-          date:           formData.date,
-        }),
+      await api.createWorkout(user.token, {
+        title:          finalTitle,
+        exerciseName:   selected?.name     || finalTitle,
+        muscleGroup:    selected?.muscleGroup || 'Other',
+        sets:           Number(formData.sets)           || 0,
+        reps:           Number(formData.reps)           || 0,
+        weight:         Number(formData.weight)         || 0,
+        duration:       Number(formData.duration)       || 0,
+        caloriesBurned: Number(formData.caloriesBurned) || 0,
+        distance:       Number(formData.distance)       || 0,
+        date:           formData.date,
       });
-      if (res.ok) {
-        onSave();
-        onClose();
-      } else {
-        const err = await res.json();
-        toast.error(err.message || 'Failed to log workout');
-      }
+      toast.success('Workout logged 💪');
+      onSave();
+      onClose();
     } catch (err) {
-      toast.error('Connection error');
+      toast.error(err.message || 'Failed to log workout');
     } finally {
       setLoading(false);
     }

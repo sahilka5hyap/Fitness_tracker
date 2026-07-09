@@ -2,11 +2,13 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { X, Activity, Ruler, FileText, Save } from 'lucide-react';
-import { BASE_URL } from '../utils/api';
+import { useToast } from './Toast';
+import api from '../utils/api';
 
 const BodyStatsModel = ({ isOpen, onClose, onSave }) => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -20,39 +22,35 @@ const BodyStatsModel = ({ isOpen, onClose, onSave }) => {
     e.preventDefault();
     // Validate at least one stat
     if (!formData.weight && !formData.bodyFat && !formData.steps) {
-      alert('Please provide at least one stat (weight, body fat, or steps)');
+      toast.error('Please provide at least one stat (weight, body fat, or steps)');
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/stats`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-        body:    JSON.stringify({
-          date:       formData.date,
-          weight:     Number(formData.weight)     || undefined,
-          bodyFat:    Number(formData.bodyFat)    || undefined,
-          muscleMass: Number(formData.muscleMass) || undefined,
-          waist:      Number(formData.waist)      || undefined,
-          chest:      Number(formData.chest)      || undefined,
-          arms:       Number(formData.arms)       || undefined,
-          legs:       Number(formData.legs)       || undefined,
-          steps:      Number(formData.steps)      || undefined,
-          sleep:      Number(formData.sleep)      || undefined,
-          water:      Number(formData.water)      || undefined,
-          notes:      formData.notes,
-        }),
+      await api.createStat(user.token, {
+        date:       formData.date,
+        weight:     Number(formData.weight)     || undefined,
+        bodyFat:    Number(formData.bodyFat)    || undefined,
+        muscleMass: Number(formData.muscleMass) || undefined,
+        waist:      Number(formData.waist)      || undefined,
+        chest:      Number(formData.chest)      || undefined,
+        arms:       Number(formData.arms)       || undefined,
+        legs:       Number(formData.legs)       || undefined,
+        steps:      Number(formData.steps)      || undefined,
+        sleep:      Number(formData.sleep)      || undefined,
+        water:      Number(formData.water)      || undefined,
+        notes:      formData.notes,
       });
-      if (res.ok) {
-        onSave();
-        onClose();
-        setFormData({ date: new Date().toISOString().split('T')[0], weight: '', bodyFat: '', muscleMass: '', waist: '', chest: '', arms: '', legs: '', steps: '', sleep: '', water: '', notes: '' });
-      } else {
-        const err = await res.json();
-        alert('Error: ' + err.message);
-      }
-    } catch (error) { console.error(error); }
-    finally { setLoading(false); }
+      toast.success('Body stats saved');
+      onSave();
+      onClose();
+      setFormData({ date: new Date().toISOString().split('T')[0], weight: '', bodyFat: '', muscleMass: '', waist: '', chest: '', arms: '', legs: '', steps: '', sleep: '', water: '', notes: '' });
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Could not save body stats');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;

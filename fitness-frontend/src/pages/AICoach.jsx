@@ -2,6 +2,8 @@ import React, { useState, useContext, useRef, useEffect, useCallback } from 'rea
 import { Send, Bot, Sparkles, Mic, MicOff, Volume2, VolumeX, Trash2, Copy, Check } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { useToast } from '../components/Toast';
+import api from '../utils/api';
 
 // ─── Markdown-lite formatter ──────────────────────────────────────────────
 const FormatMessage = ({ content, isUser }) => {
@@ -48,6 +50,7 @@ const makeWelcomeMessage = (user, id = 'welcome') => ({
 const AICoach = () => {
   const { user } = useContext(AuthContext);
   const { t }    = useContext(ThemeContext);
+  const toast    = useToast();
 
   const [messages,       setMessages]       = useState([makeWelcomeMessage(user)]);
   const [input,          setInput]          = useState('');
@@ -97,7 +100,7 @@ const AICoach = () => {
 
   const startListening = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('Speech recognition not supported in this browser.'); return; }
+    if (!SR) { toast.error('Speech recognition not supported in this browser.'); return; }
     const rec          = new SR();
     rec.lang           = 'en-US';
     rec.continuous     = false;
@@ -148,16 +151,7 @@ const AICoach = () => {
       .map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const res  = await fetch('https://fitness-backend-z4vd.onrender.com/api/ai/chat', {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${user.token}`,
-        },
-        body: JSON.stringify({ message: text, history }),
-      });
-
-      const data      = await res.json();
+      const data      = await api.askAI(user.token, text, history);
       const replyText = data.reply || data.response || '⚠️ No response received.';
 
       setMessages(prev => [...prev, {
