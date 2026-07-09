@@ -15,33 +15,37 @@ import Profile    from './pages/Profile';
 import BodyStats  from './pages/BodyStats';
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
-  return user ? children : <Navigate to="/login" />;
+  const { user } = useContext(AuthContext);
+  return user ? children : <Navigate to="/login" replace />;
 };
 
 const AppContent = () => {
-  // ✅ FIX: Bring in needsOnboarding from AuthContext
   const { user, loading, needsOnboarding } = useContext(AuthContext);
   const { t } = useContext(ThemeContext);
 
-  if (loading) return (
-    <div className={`min-h-screen flex items-center justify-center ${t.pageBg}`}>
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-[#D4FF33] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className={t.subtext}>Loading...</p>
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${t.pageBg}`}>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#D4FF33] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={t.subtext}>Loading...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className={`min-h-screen ${t.pageBg} ${t.text}`}>
       <Routes>
         {/* Public routes */}
-        <Route path="/login"    element={user ? <Navigate to="/dashboard" /> : <Login />} />
-        
-        {/* ✅ FIX: If a user exists on the register page, check where they need to go */}
-        <Route path="/register" element={user ? (needsOnboarding ? <Navigate to="/onboarding" /> : <Navigate to="/dashboard" />) : <Register />} />
+        <Route 
+          path="/login" 
+          element={user ? (needsOnboarding ? <Navigate to="/onboarding" replace /> : <Navigate to="/dashboard" replace />) : <Login />} 
+        />
+        <Route 
+          path="/register" 
+          element={user ? (needsOnboarding ? <Navigate to="/onboarding" replace /> : <Navigate to="/dashboard" replace />) : <Register />} 
+        />
 
         {/* Protected routes */}
         <Route path="/dashboard"  element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -52,8 +56,11 @@ const AppContent = () => {
         <Route path="/profile"    element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/body-stats" element={<PrivateRoute><BodyStats /></PrivateRoute>} />
 
-        {/* ✅ FIX: Default route logic updated to handle onboarding check */}
-        <Route path="/" element={<Navigate to={user ? (needsOnboarding ? '/onboarding' : '/dashboard') : '/login'} />} />
+        {/* Default fallback route */}
+        <Route 
+          path="/" 
+          element={<Navigate to={user ? (needsOnboarding ? '/onboarding' : '/dashboard') : '/login'} replace />} 
+        />
       </Routes>
 
       {user && <BottomNav />}
